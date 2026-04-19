@@ -5,7 +5,30 @@
 1. Спроектируйте to be архитектуру КиноБездны, разделив всю систему на отдельные домены и организовав интеграционное взаимодействие и единую точку вызова сервисов.
 Результат представьте в виде контейнерной диаграммы в нотации С4.
 Добавьте ссылку на файл в этот шаблон
-[ссылка на файл](ссылка)
+
+## Проделанная работа
+
+Проанализирована AS-IS архитектура (Go-монолит + единая PostgreSQL + RabbitMQ к внешней рек. системе + S3 + платёжная система + онлайн-кинотеатры). Спроектирована TO-BE архитектура с декомпозицией монолита на домены, Database-per-Service, событийной интеграцией через Kafka и единой точкой входа.
+
+## Выделенные домены
+
+- **Identity & Users** — `auth-service`, `user-service`.
+- **Catalog & Engagement** — `movies-service` (метаданные), `ratings-service` (оценки), `favorites-service` (избранное), `content-service` (ссылки на источники контента, S3).
+- **Billing** — `subscriptions-service`, `payments-service`, `discounts-service` (скидки/лояльность).
+- **Integration** — `recommendations-adapter` (мост к внешней рек. системе), `events-service` (MVP Kafka), `notifications-service`.
+- **Legacy** — `monolith` остаётся на время миграции; постепенно «удушается» паттерном Strangler Fig.
+
+Каждый сервис владеет своей схемой в PostgreSQL (DB-per-service). Асинхронная интеграция — через Kafka-топики `movie-events`, `user-events`, `payment-events`, `subscription-events`.
+
+## Единая точка вызова
+
+На входе — **API Gateway** (NGINX Ingress + Proxy-сервис на Go):
+
+- TLS-терминация и один публичный домен для всех клиентов.
+- Маршрутизация по типу клиента в соответствующий **BFF** (Web / Mobile / Smart TV) — разные агрегации и объём payload'а под разные устройства.
+- **Strangler Fig** — фиче-флаг `MOVIES_MIGRATION_PERCENT` переключает процент трафика с монолита на выделенный микросервис; позволяет бесшовный переход без простоя.
+
+[C4 Container diagram — TO-BE](./docs/architecture/tobe-container.md)
 
 # Задание 2
 
