@@ -33,41 +33,25 @@
 # Задание 2
 
 ### 1. Proxy
-Команда КиноБездны уже выделила сервис метаданных о фильмах movies и вам необходимо реализовать бесшовный переход с применением паттерна Strangler Fig в части реализации прокси-сервиса (API Gateway), с помощью которого можно будет постепенно переключать траффик, используя фиче-флаг.
 
+Реализован прокси-сервис (API Gateway) по паттерну **Strangler Fig** — в `src/microservices/proxy/` (Python 3.12 / Flask + requests + waitress). Сборка и запуск через docker-compose (порт `8000`).
 
-Реализуйте сервис на любом языке программирования в ./src/microservices/proxy.
-Конфигурация для запуска сервиса через docker-compose уже добавлена
-```yaml
-  proxy-service:
-    build:
-      context: ./src/microservices/proxy
-      dockerfile: Dockerfile
-    container_name: cinemaabyss-proxy-service
-    depends_on:
-      - monolith
-      - movies-service
-      - events-service
-    ports:
-      - "8000:8000"
-    environment:
-      PORT: 8000
-      MONOLITH_URL: http://monolith:8080
-      #монолит
-      MOVIES_SERVICE_URL: http://movies-service:8081 #сервис movies
-      EVENTS_SERVICE_URL: http://events-service:8082 
-      GRADUAL_MIGRATION: "true" # вкл/выкл простого фиче-флага
-      MOVIES_MIGRATION_PERCENT: "50" # процент миграции
-    networks:
-      - cinemaabyss-network
-```
+**Маршрутизация:**
 
-- После реализации запустите postman тесты - они все должны быть зеленые (кроме events).
-- Отправьте запросы к API Gateway:
-   ```bash
-   curl http://localhost:8000/api/movies
-   ```
-- Протестируйте постепенный переход, изменив переменную окружения MOVIES_MIGRATION_PERCENT в файле docker-compose.yml.
+| Путь | Поведение |
+|---|---|
+| `GET /health` | `200 text/plain "Strangler Fig Proxy is healthy"` |
+| `/api/movies*` | `GRADUAL_MIGRATION=true` → `MOVIES_MIGRATION_PERCENT`% трафика в `movies-service`, остальное — в монолит. `GRADUAL_MIGRATION=false` → 100% в `movies-service` (миграция домена завершена). |
+| `/api/events*` | → `events-service` |
+| `/api/users`, `/api/payments`, `/api/subscriptions`, остальное | → монолит |
+
+**Выполненные пункты задания:**
+
+- ✅ Сервис реализован в `./src/microservices/proxy`.
+- ✅ Сборка через docker-compose работает, конфигурация соблюдена (env `MONOLITH_URL`, `MOVIES_SERVICE_URL`, `EVENTS_SERVICE_URL`, `GRADUAL_MIGRATION`, `MOVIES_MIGRATION_PERCENT`).
+- ✅ Postman-тесты `npm run test:local` — **18/18 зелёных**, падают только 4 теста секции Events (сервис не реализован, это ожидаемо для части 1). Итого: Monolith 11/11, Movies 4/4, Proxy 3/3.
+- ✅ Запрос `curl http://localhost:8000/api/movies` возвращает массив фильмов.
+- ✅ Постепенный переход проверен: при `MOVIES_MIGRATION_PERCENT=50` 10 последовательных запросов распределились 6 в монолит / 4 в `movies-service` (проверка по логам `get movies from monolith` vs `get movies from movies`).
 
 
 ### 2. Kafka

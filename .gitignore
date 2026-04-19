@@ -70,6 +70,17 @@ out/
 target/
 .gradle/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# Claude Code local data
+.claude/
+
 # Node.js (for frontend or Node.js services)
 node_modules/
 npm-debug.log
