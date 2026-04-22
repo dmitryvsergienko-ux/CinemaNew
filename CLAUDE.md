@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Задание 1 — TO-BE архитектура:** ✅ готово. C4 Container диаграмма в `docs/architecture/tobe-container.md` (Mermaid, GitHub рендерит).
 - **Задание 2 — Proxy (часть 1):** ✅ готово. Python/Flask прокси в `src/microservices/proxy/`.
 - **Задание 2 — Kafka events (часть 2):** ✅ готово. Python/Flask + `kafka-python-ng` в `src/microservices/events/`. Producer+Consumer в одном процессе, три топика (`movie-events`/`user-events`/`payment-events`). Postman 22/22, 42/42 assertions. Скриншоты — в `docs/screenshots/task2-*.png`.
-- **Задание 3 — K8s + CI/CD:** частично. Манифесты `src/kubernetes/*.yaml` уже есть (скелеты), CI/CD `.github/workflows/docker-build-push.yml` — заготовка, нужна доработка.
+- **Задание 3 — K8s + CI/CD:** ✅ готово. CI/CD собирает и пушит 4 образа в `ghcr.io/dmitryvsergienko-ux/cinemanew/*:latest` (все public). K8s манифесты для всех сервисов заполнены; ingress имеет fallback-правило без `host:` для тестов через `kubectl port-forward` без прав на `/etc/hosts`. Postman-тесты в k8s — 42/42. Скриншоты — `docs/screenshots/task3-*.png`.
 - **Задание 4 — Helm:** частично. Chart-скелет в `src/kubernetes/helm/`, `values.yaml` и шаблоны `services/{proxy,events}-service.yaml` нужно заполнить.
 
 ## Architecture (big picture)
@@ -102,6 +102,7 @@ helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-
 - **`kafka-python` 2.0.x не работает на Python 3.12** (удалённый `six.moves`). В `events-service` используется форк `kafka-python-ng==2.2.3` — при апдейтах зависимостей не откатывать обратно на `kafka-python`.
 - **Порт 8080 на хосте.** Конфликтует с любым локальным сервисом на том же порту. При ошибке `port is already allocated` — проверь `docker ps`.
 - **Docker Compose `version:` obsolete warning** — безопасно игнорировать, правки compose не требуют.
+- **Минikube + ingress без админ-прав.** `minikube tunnel` и правка `C:\Windows\System32\drivers\etc\hosts` требуют админа. Workaround — `kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8888:80` + fallback-правило в `ingress.yaml` без `host:`. `kubernetes.environment.json` для postman указывает на `http://127.0.0.1:8888`.
 
 ## Conventions
 

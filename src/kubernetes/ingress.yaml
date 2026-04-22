@@ -8,10 +8,10 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
+    # Основной хост — для продового использования c /etc/hosts или реальным DNS
     - host: cinemaabyss.example.com
       http:
         paths:
-          # Events идут напрямую в events-service (упрощает тесты события)
           - path: /api/events
             pathType: Prefix
             backend:
@@ -19,7 +19,23 @@ spec:
                 name: events-service
                 port:
                   number: 8082
-          # Всё остальное — через proxy-service (Strangler Fig gateway)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
+    # Fallback без host — для тестов через kubectl port-forward без прав на /etc/hosts
+    - http:
+        paths:
+          - path: /api/events
+            pathType: Prefix
+            backend:
+              service:
+                name: events-service
+                port:
+                  number: 8082
           - path: /
             pathType: Prefix
             backend:
