@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Задание 2 — Proxy (часть 1):** ✅ готово. Python/Flask прокси в `src/microservices/proxy/`.
 - **Задание 2 — Kafka events (часть 2):** ✅ готово. Python/Flask + `kafka-python-ng` в `src/microservices/events/`. Producer+Consumer в одном процессе, три топика (`movie-events`/`user-events`/`payment-events`). Postman 22/22, 42/42 assertions. Скриншоты — в `docs/screenshots/task2-*.png`.
 - **Задание 3 — K8s + CI/CD:** ✅ готово. CI/CD собирает и пушит 4 образа в `ghcr.io/dmitryvsergienko-ux/cinemanew/*:latest` (все public). K8s манифесты для всех сервисов заполнены; ingress имеет fallback-правило без `host:` для тестов через `kubectl port-forward` без прав на `/etc/hosts`. Postman-тесты в k8s — 42/42. Скриншоты — `docs/screenshots/task3-*.png`.
-- **Задание 4 — Helm:** частично. Chart-скелет в `src/kubernetes/helm/`, `values.yaml` и шаблоны `services/{proxy,events}-service.yaml` нужно заполнить.
+- **Задание 4 — Helm:** ✅ готово. `values.yaml` переключён на свой GHCR, `dockerconfigsecret` опционален, `ingress.includeFallbackRule` генерирует правило без `host:` для тестов без админа. Шаблоны `services/proxy-service.yaml`, `events-service.yaml`, configmap заполнены. Проверено `helm install` — 7/7 Running, postman 42/42.
 
 ## Architecture (big picture)
 

@@ -3,9 +3,14 @@ global:
   namespace: cinemaabyss
   domain: cinemaabyss.example.com
 
-# Image pull secrets
+# Image pull secrets.
+# Оставить пустым (или закомментировать), если образы в GHCR публичные —
+# тогда шаблон dockerconfigsecret не будет создан и imagePullSecrets в
+# Deployment'ах будет указывать на несуществующий секрет, что допустимо
+# для public-образов (Kubernetes просто попытается pull без auth).
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
+  dockerconfigjson: ""
+
 # Database configuration
 database:
   host: postgres
@@ -15,7 +20,7 @@ database:
   password: cG9zdGdyZXNfcGFzc3dvcmQ=
   image:
     repository: postgres
-    tag: 14
+    tag: "14"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -33,7 +38,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: ghcr.io/dmitryvsergienko-ux/cinemanew/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -53,7 +58,7 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: ghcr.io/dmitryvsergienko-ux/cinemanew/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -65,7 +70,7 @@ proxyService:
       cpu: 100m
       memory: 128Mi
   service:
-    port: 80
+    port: 8000
     targetPort: 8000
     type: ClusterIP
 
@@ -73,7 +78,7 @@ proxyService:
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: ghcr.io/dmitryvsergienko-ux/cinemanew/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -93,7 +98,7 @@ moviesService:
 eventsService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: ghcr.io/dmitryvsergienko-ux/cinemanew/events-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -166,19 +171,23 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  # Если true — к основному hosts-правилу с global.domain добавится
+  # fallback-правило без host, чтобы можно было тестировать через
+  # kubectl port-forward без прав на /etc/hosts.
+  includeFallbackRule: true
   hosts:
     - host: cinemaabyss.example.com
       paths:
-        - path: /
-          pathType: Prefix
-          service: proxy-service
-          port: 80
         - path: /api/events
           pathType: Prefix
           service: events-service
           port: 8082
+        - path: /
+          pathType: Prefix
+          service: proxy-service
+          port: 8000
 
-# Application configuration
+# Application configuration (для ConfigMap cinemaabyss-config)
 config:
   # Strangler Fig configuration
   gradualMigration: "true"
