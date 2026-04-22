@@ -30,4 +30,22 @@ spec:
               number: {{ .port }}
       {{- end }}
   {{- end }}
+  {{- if .Values.ingress.includeFallbackRule }}
+  # Fallback-правило без host — принимает запросы с любым Host-заголовком.
+  # Нужно для тестов через kubectl port-forward на машинах без прав
+  # на правку /etc/hosts. Пути берутся из первого hosts-блока.
+  {{- with (index .Values.ingress.hosts 0) }}
+  - http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType }}
+        backend:
+          service:
+            name: {{ .service }}
+            port:
+              number: {{ .port }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
