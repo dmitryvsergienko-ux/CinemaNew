@@ -11,8 +11,7 @@ spec:
     - host: cinemaabyss.example.com
       http:
         paths:
-          #дополните конфигурацию для /
-          ...
+          # Events идут напрямую в events-service (упрощает тесты события)
           - path: /api/events
             pathType: Prefix
             backend:
@@ -20,3 +19,11 @@ spec:
                 name: events-service
                 port:
                   number: 8082
+          # Всё остальное — через proxy-service (Strangler Fig gateway)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 8000
