@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Задание 1 — TO-BE архитектура:** ✅ готово. C4 Container диаграмма в `docs/architecture/tobe-container.md` (Mermaid, GitHub рендерит).
 - **Задание 2 — Proxy (часть 1):** ✅ готово. Python/Flask прокси в `src/microservices/proxy/`.
-- **Задание 2 — Kafka events (часть 2):** ❌ не начато. В `src/microservices/events/` сейчас **только Dockerfile-заглушка** (`alpine` + `sleep infinity`), нужен полноценный сервис с Kafka producer/consumer.
+- **Задание 2 — Kafka events (часть 2):** ✅ готово. Python/Flask + `kafka-python-ng` в `src/microservices/events/`. Producer+Consumer в одном процессе, три топика (`movie-events`/`user-events`/`payment-events`). Postman 22/22, 42/42 assertions. Скриншоты — в `docs/screenshots/task2-*.png`.
 - **Задание 3 — K8s + CI/CD:** частично. Манифесты `src/kubernetes/*.yaml` уже есть (скелеты), CI/CD `.github/workflows/docker-build-push.yml` — заготовка, нужна доработка.
 - **Задание 4 — Helm:** частично. Chart-скелет в `src/kubernetes/helm/`, `values.yaml` и шаблоны `services/{proxy,events}-service.yaml` нужно заполнить.
 
@@ -99,7 +99,7 @@ helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-
 ## Gotchas
 
 - **Монолит падает на холодном старте без retry-логики к БД.** Контейнер не имеет `restart` policy, `initDB()` делает `log.Fatal` при первой ошибке DNS. Решение при локальном запуске — стартовать `postgres` первым и ждать 5–10 сек, потом поднимать остальное. Постоянный фикс (не применён): `depends_on: { postgres: { condition: service_healthy } }` или `restart: on-failure`.
-- **`events-service` — заглушка.** Нужна, чтобы `docker compose build` не падал с `path not found`. Postman-тесты секции Events (4 запроса) в таком виде всегда упадут — это ожидаемо до реализации задания 2 часть 2.
+- **`kafka-python` 2.0.x не работает на Python 3.12** (удалённый `six.moves`). В `events-service` используется форк `kafka-python-ng==2.2.3` — при апдейтах зависимостей не откатывать обратно на `kafka-python`.
 - **Порт 8080 на хосте.** Конфликтует с любым локальным сервисом на том же порту. При ошибке `port is already allocated` — проверь `docker ps`.
 - **Docker Compose `version:` obsolete warning** — безопасно игнорировать, правки compose не требуют.
 

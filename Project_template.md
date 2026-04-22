@@ -55,16 +55,38 @@
 
 
 ### 2. Kafka
- Вам как архитектуру нужно также проверить гипотезу насколько просто реализовать применение Kafka в данной архитектуре.
 
-Для этого нужно сделать MVP сервис events, который будет при вызове API создавать и сам же читать сообщения в топике Kafka.
+Реализован MVP сервис `events` в `src/microservices/events/` (Python 3.12 / Flask + `kafka-python-ng` + waitress). Сервис одновременно **producer и consumer**: API-хендлеры публикуют событие в Kafka-топик, фоновый поток с `KafkaConsumer` читает все три топика и логирует полученные сообщения.
 
-    - Разработайте сервис на любом языке программирования с consumer'ами и producer'ами.
-    - Реализуйте простой API, при вызове которого будут создаваться события User/Payment/Movie и обрабатываться внутри сервиса с записью в лог
-    - Добавьте в docker-compose новый сервис, kafka там уже есть
+**API:**
 
-Необходимые тесты для проверки этого API вызываются при запуске npm run test:local из папки tests/postman 
-Приложите скриншот тестов и скриншот состояния топиков Kafka из UI http://localhost:8090 
+| Эндпоинт | Топик |
+|---|---|
+| `GET /api/events/health` | — |
+| `POST /api/events/movie` | `movie-events` |
+| `POST /api/events/user` | `user-events` |
+| `POST /api/events/payment` | `payment-events` |
+
+Ответ по контракту: `{status:"success", partition, offset, event}`.
+
+**Выполненные пункты задания:**
+
+- ✅ Сервис реализован в `./src/microservices/events` на Python.
+- ✅ Producer и Consumer работают в одном процессе; события обрабатываются внутри сервиса с записью в лог (`PRODUCED …` / `CONSUMED …`).
+- ✅ API создаёт события User / Payment / Movie.
+- ✅ Сервис добавлен в `docker-compose.yml` (порт `8082`, `KAFKA_BROKERS=kafka:9092`).
+- ✅ Postman-тесты `npm run test:local` — **22 requests / 42 assertions, 0 failed**.
+
+**Скриншоты:**
+
+Newman summary:
+
+![Postman tests](./docs/screenshots/task2-postman-tests.png)
+
+Kafka UI (`http://localhost:8090`) — топики `movie-events`, `user-events`, `payment-events`:
+
+![Kafka topics](./docs/screenshots/task2-kafka-topics.png)
+
 
 # Задание 3
 

@@ -1,2 +1,12 @@
-FROM alpine:latest
-CMD ["sh", "-c", "echo 'events-service placeholder — implement in Task 2 Part 2' && sleep infinity"]
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY events.py ./
+
+EXPOSE 8082
+
+CMD ["python", "events.py"]
